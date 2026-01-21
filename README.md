@@ -113,7 +113,7 @@ Check the memory usage on the remote:
 `ss -nt`
 
 
-Fixing:     
+Task1 notes:   
 1. Your Server's Receive Buffer is full (4MB), so it stops reading.
 2. Your Server is trying to Write a response, but the Client's Receive Buffer is also full because the Client is too busy sending data to read your responses.
 3. out.flush() blocks because it can't send the data.
