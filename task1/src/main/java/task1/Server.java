@@ -5,6 +5,7 @@ import java.io.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
+import java.nio.ByteBuffer;
 
 public class Server {
     public static void main(String[] args) {
@@ -19,22 +20,36 @@ public class Server {
 
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss");
 
-            byte[] buffer = new byte[1024 * 64]; // 64KB
-
-
             while (true) {
-                if (in.available() > 0) {
-                    int bytesRead = in.read(buffer);
-                    if (bytesRead == -1) break;
-                    
-                    String answer = LocalDateTime.now().format(fmt);
-                    System.out.println("Got " + bytesRead + " bytes.");
+                // Let's find out what is the size of the buffer
+                byte[] lengthBytes = new byte[4];
+                int read = readFully(in, lengthBytes, 4);
+                int dataLength = ByteBuffer.wrap(lengthBytes).getInt();
 
-                    out.println(answer);
-                }
+                // Then we will read only the buffer size
+                byte[] buffer = new byte[dataLength];
+                read = readFully(in, buffer, dataLength);
+
+                String answer = LocalDateTime.now().format(fmt);
+                System.out.println("Got " + dataLength + " bytes.");
+
+                out.println(answer);
             }
         } catch (Exception e) {
             ;
         }
+    }
+
+    // This function just reads exactly "len" bytes from the input stream
+    public static int readFully(InputStream in, byte[] b, int len) throws IOException {
+        int total = 0;
+        while (total < len) {
+            // (len - total) is the maximum number of bytes to read
+            // r is the actual number of bytes read
+            int r = in.read(b, total, len - total);
+            if (r == -1) return total;
+            total += r;
+        }
+        return total;
     }
 }

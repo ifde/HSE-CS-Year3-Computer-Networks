@@ -3,6 +3,7 @@ package task1;
 import java.net.*;
 import java.io.*;
 import java.util.Random;
+import java.nio.ByteBuffer;
 
 public class Client {
     public static void main(String[] args) {
@@ -33,15 +34,16 @@ public class Client {
                 long totalIterationTime = 0;
 
                 for (int j = 0; j < q; j++) {
-                    // Crating a random array of bytes
                     byte[] dataToSend = new byte[dataLength];
                     random.nextBytes(dataToSend);
 
-                    // Starting the clock
-                    long startTime = System.currentTimeMillis();
-
+                    ByteBuffer bb = ByteBuffer.allocate(4);
+                    bb.putInt(dataLength);
+                    out.write(bb.array());
                     out.write(dataToSend);
                     out.flush();
+
+                    long startTime = System.currentTimeMillis();
 
                     String serverAnswer = in.readLine();
                     if (serverAnswer == null) break;
@@ -59,18 +61,16 @@ public class Client {
                 System.out.printf("%d \t %.4f %n", sizes[i], avgTimes[i]);
             }
 
-            // Write to a file
+            // Saving to results.csv
             try (PrintWriter writer = new PrintWriter(new FileWriter("results.csv"))) {
                 writer.println("Bytes,AverageTime");
-                
                 for (int i = 0; i < m; i++) {
                     writer.printf("%d,%.4f%n", sizes[i], avgTimes[i]);
                 }
-                
                 System.out.println("Saved to results.csv");
             } catch (IOException e) {
                 System.err.println("Error writing to file: " + e.getMessage());
-}
+            }
 
         } catch (Exception e) {
             System.err.println("Exception: " + e.getMessage());
