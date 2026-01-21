@@ -119,3 +119,9 @@ Task1 notes:
 3. out.flush() blocks because it can't send the data.
 B4. ecause out.flush() is blocked, your single thread never reaches the in.read() line again.
 
+### CLI
+
+Create a ZIP:   
+`zip -r HW1.zip ./task1`    
+
+
