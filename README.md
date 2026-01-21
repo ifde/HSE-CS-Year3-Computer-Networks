@@ -1,6 +1,6 @@
 # HSE CS Year3 Computer Networks
 
-A repository for the course "Computer Networks"
+A repository for the course "Computer Networks"     
 Frolov Ivan
 
 Below are some useful notes
@@ -8,10 +8,10 @@ Below are some useful notes
 
 # Java
 
-Create a Maven project
-`mvn archetype:generate`
-groupId: Your unique organization ID
-artifactId: The name of your project folder and final JAR (Java Archive filetype)
+Create a Maven project  
+`mvn archetype:generate`    
+groupId: Your unique organization ID    
+artifactId: The name of your project folder and final JAR (Java Archive filetype)   
 
 Compile the project using
 `mvn compile`
