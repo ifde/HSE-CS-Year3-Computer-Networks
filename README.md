@@ -13,17 +13,17 @@ Create a Maven project
 groupId: Your unique organization ID    
 artifactId: The name of your project folder and final JAR (Java Archive filetype)   
 
-Compile the project using
+Compile the project using   
 `mvn compile`
 
-Create the JAR
+Create the JAR  
 `mvn package`
 
-Run it using
-`java -cp target/test-1.0-SNAPSHOT.jar test.App`
+Run it using    
+`java -cp target/test-1.0-SNAPSHOT.jar test.App`    
 cp - classpath
 
-`mvn exec:java -Dexec.mainClass="test.Server"`
+`mvn exec:java -Dexec.mainClass="test.Server"`  
 D stands for Define
 
 -----
@@ -48,28 +48,28 @@ Then filter using `tcp.port == XXXX`
 
 ### Yandex Cloud 
 
-Creating a private-public SSH key pair, used for connection (private is yours)
+Creating a private-public SSH key pair, used for connection (private is yours)  
 `ssh-keygen -t networking -C "Computer Networks"`
 
-It is saved in files `/Users/admin/.ssh/id_ed25519` (private)
+It is saved in files `/Users/admin/.ssh/id_ed25519` (private)   
 `/Users/admin/.ssh/id_ed25519.pb` (public)
 
-Open the public key in terminal:
+Open the public key in terminal:    
 `cat /Users/admin/.ssh/id_ed25519.pub`
 
-Public key is this: 
+Public key is this:     
 `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIJrgLSTxqZ8C9uOg0QizsE9qS45enl030n47QnOrqAC`
 
-Or download the private-public key pair from Yandex and unzip it:
+Or download the private-public key pair from Yandex and unzip it:   
 `unzip /Users/admin/Downloads/ssh-key-1768992875951.zip -d /Users/admin/.ssh/`
 
-Connect using 
+Connect using   
 `ssh -i ~/.ssh/ssh-key-1768992875951 user@178.154.199.103`
 
-Note: setting only for me to read the private key worked 
+Note: setting only for me to read the private key worked    
 `chmod 600 /Users/admin/.ssh/ssh-key-1768992875951`
 
-To work with VSCode SSH extention update the ~/.ssh/config file:
+To work with VSCode SSH extention update the ~/.ssh/config file:    
 ```
 Host my-networking-server
     HostName 178.154.199.103
@@ -77,7 +77,7 @@ Host my-networking-server
     IdentityFile ~/.ssh/ssh-key-1768992875951
 ```
 
-Allocate more memory on a VM:
+Allocate more memory on a VM:   
 ```
 sudo fallocate -l 2G /swapfile
 sudo chmod 600 /swapfile
@@ -85,22 +85,22 @@ sudo mkswap /swapfile
 sudo swapon /swapfile
 ```
 
-Install Java SDK on a VM:
-`sudo apt update`
-`wget https://download.oracle.com/java/25/latest/jdk-25_linux-x64_bin.deb`
+Install Java SDK on a VM:   
+`sudo apt update`   
+`wget https://download.oracle.com/java/25/latest/jdk-25_linux-x64_bin.deb`  
 `sudo apt install ./jdk-25_linux-x64_bin.deb`
 
 `java --version`
 
-Send a compiled Java ARchive (JAR) to the VM:
+Send a compiled Java ARchive (JAR) to the VM:   
 ```
 scp -i ~/.ssh/ssh-key-1768992875951 ./target/task1-1.0-SNAPSHOT.jar user@178.154.199.103:/home/user
 ```
 
-Run a server:
+Run a server:   
 `java -cp ./task1-1.0-SNAPSHOT.jar task1.Server`
 
-Run the local client:
+Run the local client:   
 `java -cp target/task1-1.0-SNAPSHOT.jar task1.Client 178.154.199.103 10000 8
  5000 25`
 
@@ -109,11 +109,11 @@ Get the results on a host:
 scp -i ~/.ssh/ssh-key-1768992875951 user@178.154.199.103:/home/user/result.csv ./
 ```
 
-Check the memory usage on the remote:
+Check the memory usage on the remote:   
 `ss -nt`
 
 
-Fixing:
+Fixing:     
 1. Your Server's Receive Buffer is full (4MB), so it stops reading.
 2. Your Server is trying to Write a response, but the Client's Receive Buffer is also full because the Client is too busy sending data to read your responses.
 3. out.flush() blocks because it can't send the data.
