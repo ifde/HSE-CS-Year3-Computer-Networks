@@ -1,3 +1,11 @@
+# HSE CS Year3 Computer Networks
+
+A repository for the course "Computer Networks"
+Frolov Ivan
+
+Below are some useful notes
+
+
 # Java
 
 Create a Maven project
