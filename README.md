@@ -5,6 +5,9 @@ Frolov Ivan
 
 Below are some useful notes
 
+Link to lecture presentations and homeworkss:  
+https://disk.360.yandex.ru/d/wBgzFZP2UeGpvQ/Tasks
+
 
 # Java
 
@@ -25,6 +28,10 @@ cp - classpath
 
 `mvn exec:java -Dexec.mainClass="test.Server"`  
 D stands for Define
+
+How to test it:
+`nc -l 10000` - this starts a server on port 10000
+`nc localhost 10000` - this starts a process that sends to the server on port 10000
 
 -----
 
@@ -123,5 +130,22 @@ B4. ecause out.flush() is blocked, your single thread never reaches the in.read(
 
 Create a ZIP:   
 `zip -r HW1.zip ./task1`    
+
+--------
+
+### Iperf3
+
+`iperf3 -s` - server (on a remote)
+`iperf3 -c SERVER_IP` - client (on a local Mac)
+`iperf3 -Rc SERVER_IP` - reversed (meanijng the server sends to a client)
+
+### Iptraf
+
+`sudo iptraf` - run on a VPS (Virtual Private Server)
+
+### Some other toold 
+
+`htop`
+`nethogs`
 
 
