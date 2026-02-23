@@ -8,6 +8,9 @@ Below are some useful notes
 Link to lecture presentations and homeworkss:  
 https://disk.360.yandex.ru/d/wBgzFZP2UeGpvQ/Tasks
 
+Link to VPS:    
+https://disk.yandex.ru/i/cl6RrZ1tmOHtkQ
+
 
 # Java
 
