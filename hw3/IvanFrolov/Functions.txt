@@ -1,0 +1,19 @@
+HW3 функции и где реализованы:
+
+1) Захват всех DNS пакетов + вывод на консоль (PROMISCUOUS)
+   - IvanFrolov.DnsSniffer.captureDns()
+   - IvanFrolov.DnsPrinter.printDnsPacket() / printDnsMessage()
+
+2) D -> IPmx (MX запись, поиск в два шага)
+   - IvanFrolov.DnsMxResolver.resolveMxIp()
+   - IvanFrolov.DnsClient.query() (отправка DNS запросов через PCAP)
+   - IvanFrolov.DnsMessageBuilder.buildQuery() (упаковка DNS запроса)
+   - IvanFrolov.DnsParser.parse() (интерпретация ответа)
+
+3) Root DNS vs Provider DNS (github.com, hse.ru, draw.io)
+   - IvanFrolov.DnsRootChecker.check()
+   - IvanFrolov.DnsClient.query()
+
+Настройки IP/MAC:
+   - config.properties
+   - IvanFrolov.Config

@@ -1,0 +1,12 @@
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/App.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/Config.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/DnsClient.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/DnsClientSession.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/DnsMessageBuilder.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/DnsMxResolver.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/DnsParser.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/DnsPrinter.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/DnsRootChecker.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/DnsSniffer.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/PcapUtils.java
+/Users/admin/Desktop/Computer Networks/hw3/IvanFrolov/src/main/java/IvanFrolov/RawPacketBuilder.java
