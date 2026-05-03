@@ -6,17 +6,25 @@ import mydrive.protocol.*;
 import mydrive.util.FileUtils;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     private String clientId;
     private String storageDir;
-    private Map<String, byte[]> serverFiles = new HashMap<>(); // храним имя и checksum
+    private static final Map<String, Object> FILE_LOCKS = new ConcurrentHashMap<>();
+    private static final Map<String, Map<String, byte[]>> CLIENT_FILES = new ConcurrentHashMap<>();
 
     public ServerHandler(String storageDir) {
         this.storageDir = storageDir;
+    }
+
+    private Object getLockForFile(String filePath) {
+        return FILE_LOCKS.computeIfAbsent(filePath, k -> new Object());
+    }
+
+    private Map<String, byte[]> getClientFileCache(String clientId) {
+        return CLIENT_FILES.computeIfAbsent(clientId, k -> new ConcurrentHashMap<>());
     }
 
     @Override
@@ -27,15 +35,15 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             String clientDir = storageDir + File.separator + clientId;
             FileUtils.getOrCreateDirectory(clientDir);
             System.out.println("Client connected: " + clientId);
-            loadServerFiles(clientDir);
+            loadServerFiles(clientId, clientDir);
 
         } else if (msg instanceof FileListMessage) {
             FileListMessage m = (FileListMessage) msg;
             FileResponseMessage response = new FileResponseMessage();
 
-            String clientDir = storageDir + File.separator + clientId;
+            Map<String, byte[]> clientFileCache = getClientFileCache(clientId);
             for (FileListMessage.FileInfo file : m.getFiles()) {
-                byte[] serverChecksum = serverFiles.get(file.fileName);
+                byte[] serverChecksum = clientFileCache.get(file.fileName);
                 if (serverChecksum == null || !Arrays.equals(serverChecksum, file.checksum)) {
                     response.addMissingFile(file.fileName);
                 }
@@ -49,33 +57,35 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             String clientDir = storageDir + File.separator + clientId;
             String filePath = clientDir + File.separator + m.getFileName();
 
-            File file = new File(filePath);
-            if (!file.exists()) {
-                new FileOutputStream(filePath).close(); // creates an empty file
-            }
+            synchronized (getLockForFile(filePath)) {
+                File file = new File(filePath);
+                if (!file.exists()) {
+                    new FileOutputStream(filePath).close();
+                }
 
-            // пишет данные в файл
-            try (FileOutputStream fos = new FileOutputStream(filePath, true)) {
-                fos.write(m.getChunkData());
-                fos.flush();
-            }
+                try (FileOutputStream fos = new FileOutputStream(filePath, true)) {
+                    fos.write(m.getChunkData());
+                    fos.flush();
+                }
 
-            long expectedSize = m.getFileSize();
-            if (file.length() >= expectedSize) {
-                byte[] checksum = FileUtils.calculateMD5(file);
-                serverFiles.put(m.getFileName(), checksum);
-                System.out.println("File received: " + m.getFileName() + " (" + file.length() + " bytes)");
+                long expectedSize = m.getFileSize();
+                if (file.length() >= expectedSize) {
+                    byte[] checksum = FileUtils.calculateMD5(file);
+                    Map<String, byte[]> clientFileCache = getClientFileCache(clientId);
+                    clientFileCache.put(m.getFileName(), checksum);
+                    System.out.println("File received: " + m.getFileName() + " (" + file.length() + " bytes)");
+                }
             }
         }
     }
 
-    private void loadServerFiles(String clientDir) throws Exception {
+    private void loadServerFiles(String clientId, String clientDir) throws Exception {
         File dir = new File(clientDir);
+        Map<String, byte[]> clientFileCache = getClientFileCache(clientId);
         if (dir.exists()) {
-            // только файлы (не директории)
             for (File file : dir.listFiles((d, name) -> new File(d, name).isFile())) {
                 byte[] checksum = FileUtils.calculateMD5(file);
-                serverFiles.put(file.getName(), checksum);
+                clientFileCache.put(file.getName(), checksum);
             }
         }
     }

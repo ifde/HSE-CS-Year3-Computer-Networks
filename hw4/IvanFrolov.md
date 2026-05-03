@@ -76,37 +76,48 @@ mydrive/
 
 ### Вот пример запуска 
 
-Compile clean    
+Компилируем и очищаем облако      
 `mvn clean package -DskipTests 2>&1 && rm -rf /tmp/mydrive`
 
-Start server    
+Запуск сервера        
 `java -jar target/mydrive-server.jar 9999 /tmp/mydrive`
 
-Start client    
+Запуск клиента       
 `./run_client.sh config.properties`
 
-Create test files   
-`./create_test_files.sh`
+Создать тестовые файлы        
+`./create_test_files.sh`    
+Все файлы примерно по 100 мб 
+
 
 ![alt text](image.png)
 
-Клиент коннектится к серверу, отправляем ему информацию о тех файлах, которые у него есть локально (то есть в папке ./test_files)
+Клиент коннектится к серверу, отправляет ему информацию о тех файлах, которые у него есть локально (то есть в папке ./test_files)
 
 Далее сервер возвращает клиенту список имен тех файлов, которые он у себя не нашел в облаке (наше условное облако - это директория ~/tmp/mydrive)
 
 ![alt text](image-1.png)
 
-Соответственно дальше клиент отправляет серверу только те файлы, которых у него еще нет 
+Соответственно, дальше клиент отправляет серверу только те файлы, которых у него еще нет 
 
 После этого можно посмотреть, что сервер получил все файлы в свое облако 
 ![alt text](image-2.png)
 
+Можно посмотреть в WireShark, что TCP пакеты действительно перемещаются между клиентом и сервером
+
+![alt text](image-3.png)
+
+
+
+Флаг SYN - синхронизация        
+PSH/ACK - пуш и потом acknowledge       
+TCP Window update - технический флаг, сообщить о доступном размере буфера       
 
 ---
 
 ## Ключевые фрагменты кода
 
-### 1. Message Decoder (TCP -> объекты)
+### 1. Message Decoder
 
 ```java
 public class MessageDecoder extends ByteToMessageDecoder {
@@ -132,10 +143,10 @@ public class MessageDecoder extends ByteToMessageDecoder {
 }
 ```
 
-**Принцип:** используем ByteToMessageDecoder для обработки потока байтов из TCP соединения.
-Проверяем наличие данных перед чтением (non-blocking), затем десериализуем в объекты.
+**Суть:** используем ByteToMessageDecoder для обработки потока байтов из TCP соединения.
+Проверяем наличие данных перед чтением без блокировки, потом десериализуем в объекты.
 
-### 2. Message Encoder (объекты -> TCP)
+### 2. Message Encoder
 
 ```java
 public class MessageEncoder extends MessageToByteEncoder<Message> {
@@ -152,7 +163,7 @@ public class MessageEncoder extends MessageToByteEncoder<Message> {
 }
 ```
 
-**Принцип:** преобразуем объекты Java в последовательность байтов для отправки по TCP.
+**Суть:** преобразуем объекты Java в последовательность байтов для отправки по TCP.
 
 ### 3. Server Handler (обработка клиентов)
 
@@ -191,11 +202,11 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 }
 ```
 
-**Принцип:** для каждого подключения Netty создает отдельный handler. 
-Каждый клиент управляется независимо в одном потоке события.
-Поддерживается неограниченное число клиентов (event loop group).
+**Суть:** для каждого подключения Netty создает отдельный handler.  
+Каждый клиент управляется независимо в одном потоке события.    
+Поддерживается неограниченное число клиентов (event loop group).    
 
-### 4. Client Logic
+### 4. Клиентская логика
 
 ```java
 public void sync() throws Exception {
@@ -215,11 +226,13 @@ public void sync() throws Exception {
 }
 ```
 
+Суть: коннектится к серверу, сообщает свое id, отправляет список файлов, получает список MissingFiles, отпарвляет недостающие файлы 
+
+
+
 ---
 
 ## Сериализация сообщений
-
-**Используемый подход:** собственная реализация (не использовались сторонние JSON/Protobuf).
 
 Каждый тип сообщения имеет фиксированный формат:
 
@@ -241,62 +254,94 @@ FileChunkMessage:
 
 ---
 
-## Запуск приложения
+Тут дальше будем реализовывать parallel и DMA 
 
-### Сборка
+Общая концепция: 
+- сервер пассивный, он просто принимает и обрабатывает, что ему придет. Уже поддерживает параллельные клиенты из коробки. 
+- Клиент может выбирать стратегию отправки (последовательно / параллельно) и метод отправки (с копированием или DMA)
+
+### Параллельная отправка нескольких файлов 
+
+Для этого написан отдельный клиент `MyDriveClientParallel.javas`  
+Он создает пул потоков и до `max.connections` одновременных подключений, каждое подключение отправляет отдельный файл   
+Сервер уже умеет работать с многопоточностью 
+
+#### Сценарий №1: один клиент с несколькими потоками 
+
+**Терминал 1: Очищаем облако и перезапускаем сервер**
 ```bash
-cd hw4
-mvn clean package -DskipTests
-```
-
-### Запуск сервера
-```bash
-java -jar target/mydrive-server.jar [port] [storage_dir]
-
-# По умолчанию:
+rm -rf /tmp/mydrive
 java -jar target/mydrive-server.jar 9999 /tmp/mydrive
 ```
 
-### Запуск клиента
+**Терминал 3: Запускаем параллельного клиента**
 ```bash
-java -cp target/mydrive-server.jar mydrive.client.MyDriveClient [config_file]
-
-# Используется config.properties по умолчанию
+java -cp target/mydrive-server.jar mydrive.client.MyDriveClientParallel config.properties
 ```
 
-### Конфиг клиента (config.properties)
-```properties
-server.host=localhost
-server.port=9999
-local.dir=./test_files
-client.id=user1
-max.connections=1
+![alt text](image-4.png)
+
+Более наглядно можно видеть в WireShark, что создается несколько подключенией. То есть у нас несколько портов для клиента. 
+
+![alt text](image-5.png)
+
+![alt text](image-6.png)
+
+![alt text](image-7.png)
+
+Тут мы видим порты 59038, 59043, 59044  
+
+#### Сценарий №2: несколько клиентов
+
+**Запустить скрипт тестирования: он запустит и сервер, и клиентов**
+```bash
+chmod +x test_parallel.sh
+./test_parallel.sh 2 true 9998
 ```
+
+Параметры:
+- `3` — число клиентов
+- `true` — использовать параллельный режим (или `false` для последовательного)
+- `9998` - порт 
+
+Можно посмотреть на tcp dump (результаты в файле `tcp_analysis.txt`)
+
+Что можно сказать: 
+1. MSS = 16344 байт. Window Start = 65535 → уменьшается до 4332 (Flow Control)
+2. Медленный старт в первые 400ms 
+3. Пакеты растут: 8B → 69B → 16KB → 65KB 
+4. Congestion нет (у нас локальное соединение)
+5. Flow Control работает, 2 независимых соединения 
 
 ---
 
-## Подготовка тестовых данных
+### Использование DMA 
 
-Для демонстрации создаем тестовые файлы размером 100+ МБ:
+Для этого есть отдельный клиент `MyDriveClientDMA.java`
 
-```bash
-mkdir -p test_files
+Там изменение `sendFile` на использование `channel.writeAndFlush(new DefaultFileRegion(file,0,file.length()))` и предварительная отправка заголовка с именем/размером
 
-# Создаем 10 файлов по 100 МБ каждый
-for i in {1..10}; do
-  dd if=/dev/zero of=test_files/file_${i}.bin bs=1M count=100
-done
-```
+Запустить все для проверки можно скриптом   
+`test_parallel.sh`
 
-это делает скрипт `create_test_files.sh` 
+Что получается: 
 
----
+![alt text](image-8.png)
 
-## Возможные улучшения (для полного балла)
+#### Результаты DMA теста
 
-1. **Parallel file transfers** (до +2 баллов): клиент может открывать несколько соединений и отправлять файлы одновременно.
+Общие времена:  
+- Без DMA: 6.856s
+- С DMA: 6.044s
+- Ускорение: 0.8s (11.8% быстрее)
 
-2. **DMA (Direct Memory Access)** (до +2 баллов): использовать `DefaultFileRegion` для передачи файлов без копирования в RAM.
+Пропускная способность: 
+- Без DMA: 200MB ÷ 6.856s = 29.2 MB/s
+- С DMA: 200MB ÷ 6.044s = 33.1 MB/s
+- Прирост: +13%
 
-3. **Более сложный протокол:** поддержка удаления файлов, incremental sync, версионирование.
+Эффект тут получился небольшой 
 
+----
+
+Фух, вроде все 
